@@ -1,0 +1,65 @@
+/* Force selected value text to be visible (dark on white Dash control) */
+.Select-value-label,
+.Select--single > .Select-control .Select-value,
+.Select--single > .Select-control .Select-value .Select-value-label {
+    color: #111827 !important;
+    font-weight: 600 !important;
+}
+
+.Select-placeholder {
+    color: #6b7280 !important;
+}
+
+.Select-input > input {
+    color: #111827 !important;
+}
+
+/* Dropdown list — keep dark */
+.Select-menu-outer {
+    background-color: #1e2a3a !important;
+    border: 1px solid #2d3a4a !important;
+    z-index: 9999 !important;
+}
+.Select-menu {
+    background-color: #1e2a3a !important;
+}
+.Select-option {
+    background-color: #1e2a3a !important;
+    color: #e5e7eb !important;
+}
+.Select-option:hover,
+.Select-option.is-focused {
+    background-color: #2d3a4a !important;
+    color: #f59e0b !important;
+}
+.Select-option.is-selected {
+    background-color: #0d1117 !important;
+    color: #f59e0b !important;
+    font-weight: 700 !important;
+}
+
+/* react-select v5 (hashed class names) */
+[class$="-singleValue"] {
+    color: #111827 !important;
+    font-weight: 600 !important;
+}
+[class$="-placeholder"] {
+    color: #6b7280 !important;
+}
+[class$="-Input"] input {
+    color: #111827 !important;
+}
+[class$="-menu"],
+[class$="-MenuList"] {
+    background-color: #1e2a3a !important;
+    border: 1px solid #2d3a4a !important;
+    z-index: 9999 !important;
+}
+[class$="-option"] {
+    background-color: #1e2a3a !important;
+    color: #e5e7eb !important;
+}
+[class$="-option"]:hover {
+    background-color: #2d3a4a !important;
+    color: #f59e0b !important;
+}
