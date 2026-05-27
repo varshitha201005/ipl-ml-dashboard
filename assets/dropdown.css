@@ -63,3 +63,26 @@
     background-color: #2d3a4a !important;
     color: #f59e0b !important;
 }
+
+/* ── Sidebar toggle button — always visible ─────────────── */
+.hamburger-btn {
+    display: block !important;
+}
+.mobile-close-btn {
+    display: block !important;
+}
+
+/* ── Sidebar transition ──────────────────────────────────── */
+#sidebar {
+    transition: left 0.3s ease;
+}
+#main-content {
+    transition: margin-left 0.3s ease;
+}
+
+/* ── Mobile: full width content ─────────────────────────── */
+@media (max-width: 768px) {
+    #page-content {
+        padding: 16px !important;
+    }
+}

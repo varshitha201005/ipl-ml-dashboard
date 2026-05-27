@@ -116,6 +116,13 @@ def section_label(text):
 # SIDEBAR
 # ══════════════════════════════════════════════════════════
 sidebar = html.Div([
+    # Close button — only visible on mobile
+    html.Button("✕", id="close-sidebar", n_clicks=0, style={
+        'position': 'absolute', 'top': '12px', 'right': '12px',
+        'background': 'none', 'border': 'none', 'color': '#9ca3af',
+        'fontSize': '1.2rem', 'cursor': 'pointer',
+        'zIndex': '1001'
+    }, className="mobile-close-btn"),
     html.Div([
         html.H2("🏏 IPL", style={'color': GOLD, 'fontWeight': '700', 'fontSize': '1.4rem'}),
         html.P("ML Dashboard • 2008–2024", style={'color': '#6b7280', 'fontSize': '0.75rem', 'marginTop': '4px'}),
@@ -143,7 +150,7 @@ sidebar = html.Div([
         html.P("Data: IPL 2008–2024",         style={'color': '#6b7280', 'fontSize': '0.75rem'}),
     ], style={'padding': '20px', 'borderTop': '1px solid #1e2a3a', 'marginTop': '40px'}),
 
-], style={
+], id='sidebar', style={
     'position': 'fixed', 'left': '0', 'top': '0',
     'height': '100vh', 'width': '240px',
     'background': 'linear-gradient(180deg, #0d1117 0%, #161b27 100%)',
@@ -818,9 +825,21 @@ server = app.server
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
+    # Overlay for mobile — clicking it closes the sidebar
+    html.Div(id='sidebar-overlay', n_clicks=0, style={
+        'display': 'none', 'position': 'fixed', 'top': '0', 'left': '0',
+        'width': '100vw', 'height': '100vh', 'background': 'rgba(0,0,0,0.5)',
+        'zIndex': '999'
+    }),
     sidebar,
     html.Div([
         html.Div([
+            # Hamburger button — only visible on mobile
+            html.Button("☰", id="open-sidebar", n_clicks=0, style={
+                'background': 'none', 'border': 'none', 'color': '#fff',
+                'fontSize': '1.4rem', 'cursor': 'pointer', 'marginRight': '12px',
+                'display': 'none'
+            }, className="hamburger-btn"),
             html.Span("IPL Statistics & ML Dashboard", style={'color': '#fff', 'fontWeight': '600', 'fontSize': '1rem'}),
             html.Span("2008 – 2024", style={
                 'background': f'linear-gradient(135deg, {GOLD}, #d97706)',
@@ -831,15 +850,52 @@ app.layout = html.Div([
             'background': 'linear-gradient(90deg, #0d1117, #161b27)',
             'borderBottom': '1px solid #1e2a3a', 'padding': '16px 32px',
             'display': 'flex', 'alignItems': 'center', 'justifyContent': 'space-between',
-            'position': 'sticky', 'top': '0', 'zIndex': '999'
+            'position': 'sticky', 'top': '0', 'zIndex': '998'
         }),
         html.Div(id='page-content', style={'padding': '32px'}),
-    ], style={'marginLeft': '240px', 'minHeight': '100vh', 'background': '#0a0e1a'}),
+    ], id='main-content', style={'marginLeft': '240px', 'minHeight': '100vh', 'background': '#0a0e1a'}),
 ], style={'fontFamily': 'Inter, sans-serif'})
 
 # ══════════════════════════════════════════════════════════
 # CALLBACKS
 # ══════════════════════════════════════════════════════════
+
+# ── Sidebar toggle (works on both mobile and desktop) ──────
+@app.callback(
+    Output('sidebar', 'style'),
+    Output('sidebar-overlay', 'style'),
+    Output('main-content', 'style'),
+    Input('open-sidebar', 'n_clicks'),
+    Input('close-sidebar', 'n_clicks'),
+    Input('sidebar-overlay', 'n_clicks'),
+    Input('url', 'pathname'),
+    State('sidebar', 'style'),
+    prevent_initial_call=True
+)
+def toggle_sidebar(open_clicks, close_clicks, overlay_clicks, pathname, current_style):
+    from dash import ctx
+    trigger = ctx.triggered_id
+
+    sidebar_base = {
+        'position': 'fixed', 'top': '0', 'height': '100vh', 'width': '240px',
+        'background': 'linear-gradient(180deg, #0d1117 0%, #161b27 100%)',
+        'borderRight': '1px solid #1e2a3a', 'zIndex': '1000', 'overflowY': 'auto',
+        'transition': 'left 0.3s ease'
+    }
+    overlay_hidden = {'display': 'none', 'position': 'fixed', 'top': '0', 'left': '0',
+                      'width': '100vw', 'height': '100vh', 'background': 'rgba(0,0,0,0.5)', 'zIndex': '999'}
+    overlay_shown  = {**overlay_hidden, 'display': 'block'}
+
+    sidebar_open   = {**sidebar_base, 'left': '0'}
+    sidebar_closed = {**sidebar_base, 'left': '-240px'}
+    content_with_sidebar    = {'marginLeft': '240px', 'minHeight': '100vh', 'background': '#0a0e1a', 'transition': 'margin-left 0.3s ease'}
+    content_without_sidebar = {'marginLeft': '0',     'minHeight': '100vh', 'background': '#0a0e1a', 'transition': 'margin-left 0.3s ease'}
+
+    if trigger == 'open-sidebar':
+        return sidebar_open, overlay_shown, content_without_sidebar
+    else:
+        # close on: close button, overlay click, or page navigation
+        return sidebar_closed, overlay_hidden, content_without_sidebar
 
 @app.callback(Output('page-content','children'), Input('url','pathname'))
 def display_page(pathname):
