@@ -1,11 +1,3 @@
----
-title: IPL ML Dashboard
-emoji: 🏏
-colorFrom: yellow
-colorTo: indigo
-sdk: docker
-pinned: false
----
 # 🏏 IPL Statistics & ML Dashboard
 
 > **Analyze. Predict. Dominate.**
