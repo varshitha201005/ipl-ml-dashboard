@@ -17,7 +17,7 @@ A full-stack IPL Cricket Analytics Dashboard that helps fans, analysts and enthu
 - 🏠 **Home Dashboard** — KPI cards, top scorers, wicket takers, season champions
 - 🏆 **Team Intelligence** — Win rates, titles, season-wise performance, head-to-head stats
 - 🏟️ **Phase & Pitch Stats** — Powerplay/Middle/Death analysis, venue stats, pace vs spin breakdown
-- 📊 **Career Rankings** — Top 15 run scorers, wicket takers, Orange & Purple cap winners per season, Player Career Timeline
+- 📊 **Career Rankings** — Top 15 run scorers, wicket takers, Player Career Timeline
 - ⚔️ **Player Comparison** — Side-by-side player stats with season-wise runs chart
 - 🔮 **Match Predictor** — ML model predicts match winner with win probabilities
 - 🏏 **Score Predictor** — Predicts first innings total based on team, venue & wickets
