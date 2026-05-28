@@ -460,6 +460,9 @@ def career_rankings_layout():
     fig_wkts.update_layout(**DARK, title_font_color='#fff', coloraxis_showscale=False)
     fig_wkts.update_yaxes(categoryorder='total ascending')
 
+    # Default player for timeline
+    default_player = 'V Kohli' if 'V Kohli' in PLAYERS else PLAYERS[0]
+
     return html.Div([
         page_header("Career Rankings", "All time leaderboards, Orange Cap & Purple Cap winners"),
 
@@ -468,7 +471,7 @@ def career_rankings_layout():
             dbc.Col(chart_card(dcc.Graph(figure=fig_wkts, config={'displayModeBar': False})), md=6),
         ]),
 
-        # Orange Cap Table
+        # Orange & Purple Cap Tables
         dbc.Row([
             dbc.Col([
                 html.Div([
@@ -497,9 +500,29 @@ def career_rankings_layout():
                     ]),
                 ], style={'background': '#0d1117', 'border': '1px solid #1e2a3a', 'borderRadius': '12px', 'padding': '20px'}),
             ], md=6),
-        ]),
-    ])
+        ], className="mb-4"),
 
+        # ── Player Career Timeline ─────────────────────────────
+        html.Div([
+            html.P("🗓️ Player Career Timeline", style={
+                'color': '#fff', 'fontWeight': '700', 'fontSize': '1rem', 'marginBottom': '6px'
+            }),
+            html.P("Select a player to see which team they played for in each season",
+                style={'color': '#6b7280', 'fontSize': '0.8rem', 'marginBottom': '16px'}),
+            dcc.Dropdown(
+                id='career-player',
+                options=[{'label': p, 'value': p} for p in sorted(PLAYERS)],
+                value=default_player,
+                placeholder='Search player name...',
+                style={'color': '#000000', 'marginBottom': '16px'},
+                clearable=False,
+            ),
+            html.Div(id='career-timeline-result'),
+        ], style={
+            'background': '#0d1117', 'border': '1px solid #1e2a3a',
+            'borderRadius': '12px', 'padding': '24px', 'marginTop': '8px'
+        }),
+    ])
 # ══════════════════════════════════════════════════════════
 # PAGE 5 — PLAYER COMPARISON
 # ══════════════════════════════════════════════════════════
@@ -1185,5 +1208,90 @@ def find_similar(n, player):
         return html.Div(f"⚠️ Error: {str(e)}", style={'color':'#ef4444','marginTop':'16px'})
 
 # ══════════════════════════════════════════════════════════
+# ── Player Career Timeline Callback ───────────────────────
+@app.callback(
+    Output('career-timeline-result', 'children'),
+    Input('career-player', 'value')
+)
+def player_career_timeline(player):
+    if not player:
+        return html.P("Select a player above.", style={'color': '#6b7280'})
+    try:
+        del_m = deliveries.merge(
+            matches[['match_id', 'season', 'team1', 'team2']],
+            on='match_id', how='left'
+        )
+
+        player_data = del_m[del_m['batter'] == player].copy()
+
+        if len(player_data) == 0:
+            return html.P(f"No data found for {player}.", style={'color': '#6b7280'})
+
+        season_stats = player_data.groupby('season').agg(
+            Runs    = ('batsman_runs', 'sum'),
+            Balls   = ('batsman_runs', 'count'),
+            Matches = ('match_id',     'nunique'),
+            Team    = ('batting_team', lambda x: x.mode()[0] if len(x) > 0 else 'Unknown')
+        ).reset_index()
+
+        season_stats['SR']  = (season_stats['Runs'] / season_stats['Balls'] * 100).round(1)
+        season_stats['Avg'] = (season_stats['Runs'] / season_stats['Matches']).round(1)
+        season_stats = season_stats.sort_values('season')
+
+        total_runs     = int(season_stats['Runs'].sum())
+        total_matches  = int(season_stats['Matches'].sum())
+        seasons_played = len(season_stats)
+        teams_played   = season_stats['Team'].nunique()
+
+        fig = px.bar(season_stats, x='season', y='Runs',
+            color='Team',
+            title=f'🏏 {player} — Runs Per Season by Team',
+            text='Runs')
+        fig.update_traces(textposition='outside', textfont_color='#9ca3af')
+        fig.update_layout(**DARK, title_font_color='#fff')
+        fig.update_xaxes(type='category', title='Season')
+        fig.update_yaxes(title='Runs')
+
+        return html.Div([
+            # Summary stat cards
+            dbc.Row([
+                dbc.Col(stat_card("🏏", str(total_runs),    "Career Runs",   "All seasons combined"), md=3),
+                dbc.Col(stat_card("🎮", str(total_matches), "Matches",       "IPL career"),            md=3),
+                dbc.Col(stat_card("📅", str(seasons_played),"Seasons",       "Seasons played"),        md=3),
+                dbc.Col(stat_card("🏟️", str(teams_played),  "Teams",         "Franchises represented"),md=3),
+            ], className="mb-4"),
+
+            # Season by season table
+            html.Div([
+                # Table header
+                html.Div([
+                    html.Span("Season",  style={'color': GOLD, 'fontWeight': '700', 'fontSize': '0.8rem', 'width': '80px',  'display': 'inline-block'}),
+                    html.Span("Team",    style={'color': GOLD, 'fontWeight': '700', 'fontSize': '0.8rem', 'width': '220px', 'display': 'inline-block'}),
+                    html.Span("Matches", style={'color': GOLD, 'fontWeight': '700', 'fontSize': '0.8rem', 'width': '80px',  'display': 'inline-block'}),
+                    html.Span("Runs",    style={'color': GOLD, 'fontWeight': '700', 'fontSize': '0.8rem', 'width': '80px',  'display': 'inline-block'}),
+                    html.Span("Avg",     style={'color': GOLD, 'fontWeight': '700', 'fontSize': '0.8rem', 'width': '80px',  'display': 'inline-block'}),
+                    html.Span("SR",      style={'color': GOLD, 'fontWeight': '700', 'fontSize': '0.8rem', 'width': '70px',  'display': 'inline-block'}),
+                ], style={'padding': '10px 0', 'borderBottom': f'2px solid {GOLD}', 'marginBottom': '8px'}),
+
+                # Table rows
+                *[html.Div([
+                    html.Span(str(int(row['season'])),  style={'color': '#e5e7eb', 'fontSize': '0.85rem', 'fontWeight': '600', 'width': '80px',  'display': 'inline-block'}),
+                    html.Span(row['Team'],               style={'color': GOLD,     'fontSize': '0.85rem',                      'width': '220px', 'display': 'inline-block'}),
+                    html.Span(str(int(row['Matches'])),  style={'color': '#9ca3af','fontSize': '0.85rem',                      'width': '80px',  'display': 'inline-block'}),
+                    html.Span(str(int(row['Runs'])),     style={'color': '#fff',   'fontSize': '0.85rem', 'fontWeight': '700', 'width': '80px',  'display': 'inline-block'}),
+                    html.Span(str(row['Avg']),           style={'color': '#9ca3af','fontSize': '0.85rem',                      'width': '80px',  'display': 'inline-block'}),
+                    html.Span(str(row['SR']),            style={'color': '#9ca3af','fontSize': '0.85rem',                      'width': '70px',  'display': 'inline-block'}),
+                ], style={'padding': '10px 0', 'borderBottom': '1px solid #1e2a3a'})
+                for _, row in season_stats.iterrows()],
+
+            ], style={'overflowX': 'auto', 'marginBottom': '24px'}),
+
+            # Bar chart
+            chart_card(dcc.Graph(figure=fig, config={'displayModeBar': False})),
+        ])
+
+    except Exception as e:
+        return html.Div(f"⚠️ Error: {str(e)}", style={'color': '#ef4444', 'marginTop': '16px'})
+
 if __name__ == '__main__':
     app.run(debug=True)
