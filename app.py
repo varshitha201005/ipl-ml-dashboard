@@ -423,15 +423,6 @@ def phase_intelligence_layout():
 # PAGE 4 — CAREER RANKINGS
 # ══════════════════════════════════════════════════════════
 def career_rankings_layout():
-    # All time top run scorers
-    top_runs = deliveries.groupby('batter')['batsman_runs'].sum().reset_index()
-    top_runs.columns = ['Player', 'Runs']
-    top_runs = top_runs.sort_values('Runs', ascending=False).head(15)
-
-    # All time top wicket takers
-    top_wkts = deliveries[deliveries['is_wicket'] == 1].groupby('bowler').size().reset_index()
-    top_wkts.columns = ['Player', 'Wickets']
-    top_wkts = top_wkts.sort_values('Wickets', ascending=False).head(15)
 
     # Orange cap per season
     del_m = DEL_SEASON.copy()
