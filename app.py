@@ -31,6 +31,19 @@ deliveries['is_wicket']    = pd.to_numeric(deliveries['is_wicket'],    errors='c
 DEL_VENUE   = deliveries.merge(matches[['match_id','venue']], on='match_id', how='left')
 DEL_SEASON  = deliveries.merge(matches[['match_id','season']], on='match_id', how='left')
 
+# Pre-compute career rankings data
+ORANGE_CAP = DEL_SEASON.groupby(['season','batter'])['batsman_runs'].sum().reset_index()
+ORANGE_CAP = ORANGE_CAP.dropna(subset=['season'])
+ORANGE_CAP = ORANGE_CAP.loc[ORANGE_CAP.groupby('season')['batsman_runs'].idxmax()].reset_index(drop=True)
+ORANGE_CAP.columns = ['Season', 'Player', 'Runs']
+ORANGE_CAP = ORANGE_CAP.sort_values('Season')
+
+PURPLE_CAP = DEL_SEASON[DEL_SEASON['is_wicket']==1].groupby(['season','bowler']).size().reset_index()
+PURPLE_CAP.columns = ['Season', 'Player', 'Wickets']
+PURPLE_CAP = PURPLE_CAP.dropna(subset=['Season'])
+PURPLE_CAP = PURPLE_CAP.loc[PURPLE_CAP.groupby('Season')['Wickets'].idxmax()].reset_index(drop=True)
+PURPLE_CAP = PURPLE_CAP.sort_values('Season') 
+
 def get_phase(over):
     try:
         over = float(over)
@@ -424,20 +437,8 @@ def phase_intelligence_layout():
 # ══════════════════════════════════════════════════════════
 def career_rankings_layout():
 
-    # Orange cap per season
-    del_m = DEL_SEASON.copy()
-    orange_cap = del_m.groupby(['season','batter'])['batsman_runs'].sum().reset_index()
-    orange_cap = orange_cap.dropna(subset=['season'])
-    orange_cap = orange_cap.loc[orange_cap.groupby('season')['batsman_runs'].idxmax()].reset_index(drop=True)
-    orange_cap.columns = ['Season', 'Player', 'Runs']
-    orange_cap = orange_cap.sort_values('Season')
-
-    # Purple cap per season
-    wkts_season = del_m[del_m['is_wicket'] == 1].groupby(['season','bowler']).size().reset_index()
-    wkts_season.columns = ['Season', 'Player', 'Wickets']
-    wkts_season = wkts_season.dropna(subset=['Season'])
-    purple_cap = wkts_season.loc[wkts_season.groupby('Season')['Wickets'].idxmax()].reset_index(drop=True)
-    purple_cap = purple_cap.sort_values('Season')
+    orange_cap = ORANGE_CAP
+    purple_cap = PURPLE_CAP
 
     fig_runs = px.bar(top_runs, x='Runs', y='Player', orientation='h',
         title='🏏 All Time Top 15 Run Scorers',
